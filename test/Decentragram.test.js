@@ -95,6 +95,20 @@ contract('Decentragram', ([deployer, author, tipper]) => {
 
       // FAILURE: Tries to tip a image that does not exist
       await decentragram.tipImageOwner(99, { from: tipper, value: web3.utils.toWei('1', 'Ether')}).should.be.rejected;
+      await decentragram.tipImageOwner(imageCount, { from: author, value: web3.utils.toWei('1', 'Ether')}).should.be.rejected;
+    })
+
+    it('Delete images', async () => {
+      result = await decentragram.deleteImage(hash, { from: author });
+
+      // SUCCESS
+      const event = result.logs[0].args
+      assert.equal(event.hash, hash, 'Hash is correct')
+
+      // FAILURE
+      await decentragram.deleteImage(hash, { from: tipper }).should.be.rejected;
+      await decentragram.deleteImage(hash, { from: deployer }).should.be.rejected;
+      await decentragram.deleteImage("", { from: author }).should.be.rejected;
     })
   })
 })
