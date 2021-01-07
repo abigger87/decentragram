@@ -31,7 +31,6 @@ class Main extends Component {
               </form>
               <p>&nbsp;</p>
               { this.props.images.map((image, key) => {
-                console.log(image)
                 if(!image.hash) return ('')
                 return(
                   <div className="card mb-4" key={key} >
