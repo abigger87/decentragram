@@ -30,6 +30,13 @@ class App extends Component {
     }
   }
 
+  sortImages = () => {
+    // Sort images. Show highest tipped images first
+      this.setState({
+        images: this.state.images.sort((a,b) => b.tipAmount - a.tipAmount )
+      })
+  }
+
   async loadBlockchainData() {
     const web3 = window.web3
     // Load account
@@ -50,10 +57,7 @@ class App extends Component {
           images: [...this.state.images, image]
         })
       }
-      // Sort images. Show highest tipped images first
-      this.setState({
-        images: this.state.images.sort((a,b) => b.tipAmount - a.tipAmount )
-      })
+      this.sortImages()
       this.setState({ loading: false})
     } else {
       window.alert('Decentragram contract not deployed to detected network.')
@@ -61,7 +65,6 @@ class App extends Component {
   }
 
   captureFile = event => {
-
     event.preventDefault()
     const file = event.target.files[0]
     const reader = new window.FileReader()
@@ -69,26 +72,37 @@ class App extends Component {
 
     reader.onloadend = () => {
       this.setState({ buffer: Buffer(reader.result) })
-      console.log('buffer', this.state.buffer)
     }
   }
 
   uploadImage = description => {
-    console.log("Submitting file to ipfs...")
-
-    //adding file to the IPFS
+    // Add File to IPFS
     ipfs.add(this.state.buffer, (error, result) => {
-      console.log('Ipfs result', result)
       if(error) {
         console.error(error)
         return
       }
 
       this.setState({ loading: true })
-      this.state.decentragram.methods.uploadImage(result[0].hash, description).send({ from: this.state.account }).on('transactionHash', (hash) => {
+      this.state.decentragram.methods.uploadImage(result[0].hash, description).send({ from: this.state.account }).on('transactionHash', async (hash) => {
+        this.setState({ images: [] })
+        const imagesCount = await this.state.decentragram.methods.imageCount().call()
+        this.setState({ imagesCount })
+        // Load images
+        for (var i = 1; i <= imagesCount; i++) {
+          const image = await this.state.decentragram.methods.images(i).call()
+          this.setState({
+            images: [...this.state.images, image]
+          })
+        }
+        this.sortImages()
         this.setState({ loading: false })
       })
     })
+  }
+
+  deleteImage = async (hash) => {
+    await this.state.decentragram.methods.deleteImage(hash).send({ from: this.state.account }).on('transactionHash', () => {})
   }
 
   tipImageOwner(id, tipAmount) {
@@ -119,6 +133,8 @@ class App extends Component {
         { this.state.loading
           ? <div id="loader" className="text-center mt-5"><p>Loading...</p></div>
           : <Main
+              deleteImage={this.deleteImage}
+              author={this.state.account}
               images={this.state.images}
               captureFile={this.captureFile}
               uploadImage={this.uploadImage}

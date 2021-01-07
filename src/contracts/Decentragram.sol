@@ -120,20 +120,21 @@ contract Decentragram is Owner {
             bytes(_hash).length > 0,
             "Must have a hash of length non-zero."
         );
+        uint256 _id = getIdFromHash[_hash];
         require(
-            msg.sender == images[getIdFromHash[_hash]].author,
+            msg.sender == images[_id].author,
             "Author must be the message caller"
         );
 
-        Image memory _image = images[getIdFromHash[_hash]];
-        delete images[getIdFromHash[_hash]];
+        Image memory _image = images[_id];
+        delete images[_id];
 
         emit ImageDeleted(
             _image.id,
             _image.hash,
             _image.description,
             _image.tipAmount,
-            _image.author
+            msg.sender
         );
     }
 }

@@ -31,6 +31,8 @@ class Main extends Component {
               </form>
               <p>&nbsp;</p>
               { this.props.images.map((image, key) => {
+                console.log(image)
+                if(!image.hash) return ('')
                 return(
                   <div className="card mb-4" key={key} >
                     <div className="card-header">
@@ -47,6 +49,16 @@ class Main extends Component {
                         <p class="text-center"><img src={`https://ipfs.infura.io/ipfs/${image.hash}`} style={{ maxWidth: '420px'}}/></p>
                         <p>{image.description}</p>
                       </li>
+                      {image.author === this.props.author ? (
+                      <li className="list-group-item">
+                          <form onSubmit={async (e) => {
+                            e.preventDefault()
+                            await this.props.deleteImage(image.hash)
+                          }} >
+                            <button type="submit" class="btn btn-primary btn-block btn-lg">Delete</button>
+                          </form>
+                      </li>
+                      ) : ('')}
                       <li key={key} className="list-group-item py-2">
                         <small className="float-left mt-1 text-muted">
                           TIPS: {window.web3.utils.fromWei(image.tipAmount.toString(), 'Ether')} ETH
